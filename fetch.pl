@@ -44,7 +44,7 @@ my $req = <<'EOF';
     "filter": {
         "and": [
             { "term": { "authorized": true } },
-            { "term": { "status": "cpan" } }
+            { "terms": { "status": ["cpan","latest"] } }
         ]
     },
     "fields": ["download_url"]
@@ -73,7 +73,8 @@ eval {
 die("JSON parse error: $@") if $@;
 
 #test
-my @tests = ("5.18.1\tR/RJ/RJBS/perl-5.18.1.tar.",
+my @tests = ("5.20.0\tR/RJ/RJBS/perl-5.20.0.tar.",
+            "5.18.1\tR/RJ/RJBS/perl-5.18.1.tar.",
             "5.17.3\tS/SH/SHAY/perl-5.17.3.tar.",
             "5.16.3\tR/RJ/RJBS/perl-5.16.3.tar.",
             "5.12.2\tJ/JE/JESSE/perl-5.12.2.tar.",
