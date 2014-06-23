@@ -6,6 +6,7 @@ use FindBin;
 use HTTP::Tiny;
 use Getopt::Long;
 use JSON;
+use CPAN::DistnameInfo;
 
 Getopt::Long::Configure ("no_ignore_case");
 GetOptions(
@@ -15,30 +16,58 @@ GetOptions(
 sub _by_version {
     my %v = map {
         my @v = split(qr/[-._]/, $_);
+        $v[1] = substr($v[1],0,3);
         $v[2] ||= 0;
         $v[2] =~ s/^0+/0/g;
+        $v[2] = 0 if $v[2] =~ m![^0-9]!;
         $v[3] ||= 'Z';
         $v[3] =~ s/^0+/0/g;
         ($_ => sprintf '%d.%03d%03d-%s', @v)
-    } $a->{version}, $b->{version};
-    $v{$b->{version}} cmp $v{$a->{version}};
+    } $a->version, $b->version;
+    $v{$b->version} cmp $v{$a->version};
 }
 
 my $tsv = $FindBin::Bin . '/htdocs/perl_versions.txt';
 mkdir $FindBin::Bin . '/htdocs';
 
+my $req = <<'EOF';
+{
+    "size": 1000,
+    "query": {
+        "term": {
+            "distribution": "perl"
+        }
+    },
+    "sort": [
+        { "version_numified": "desc" }
+    ],
+    "filter": {
+        "and": [
+            { "term": { "authorized": true } },
+            { "term": { "status": "cpan" } }
+        ]
+    },
+    "fields": ["download_url"]
+}
+EOF
+
 my $agent = HTTP::Tiny->new;
-my $res = $agent->get('http://search.cpan.org/api/dist/perl');
-die("Cannot get search.cpan.org/api/dist/perl $res->{status} $res->{reason}\n") unless $res->{success};
+my $res = $agent->request('GET', 'http://api.metacpan.org/v0/release/_search', { content => $req } );
+die("Failed to request api.metacpan.org status:$res->{status} reason:$res->{reason}\n") unless $res->{success};
 exit() if $res->{status} != 200;
 
 my $versions = '';
 eval {
     my $ref = JSON::decode_json($res->{content});
-    foreach my $release ( sort _by_version grep { $_->{authorized} }  @{$ref->{releases}} ) {
-        $versions .= $release->{version} . "\t"
-            . join('/', substr( $release->{cpanid}, 0, 1 ), substr( $release->{cpanid}, 0, 2 ), $release->{cpanid}, $release->{archive} )
-            . "\n";
+    my @releases;
+    foreach my $rel ( @{$ref->{hits}->{hits}} ) {
+        my $path = $rel->{fields}->{download_url};
+        $path =~ s{\A.*/authors/id/}{}msx;
+        push @releases, CPAN::DistnameInfo->new($path);
+    }
+    foreach my $r ( sort _by_version  @releases ) {
+        $versions .= $r->version . "\t" . $r->pathname ."\n";
+
     }
 };
 die("JSON parse error: $@") if $@;
