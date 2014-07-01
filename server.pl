@@ -196,6 +196,17 @@ $proclet->service(
     },
 );
 
+if ( $ENV{DYNO} ) {
+    $proclet->service(
+        every => '16,46 * * * *',
+        tag => 'ping_web',
+        code => sub {
+            my $ua = HTTP::Tiny->new;
+            $ua->get('http://perl-releases.herokuapp.com/');
+        }
+    );
+}
+
 my $app = builder {
     enable 'Lint';
     enable 'StackTrace';
