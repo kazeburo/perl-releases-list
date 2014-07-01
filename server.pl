@@ -128,10 +128,7 @@ sub fetch_version_list {
     print $fh $versions;
     close($fh);
 
-    cap_cmd(['s3cmd',
-#             '--access_key='.$ENV{AWS_ACCESS_KEY},
-#             '--secret_key='.$ENV{AWS_SECRET_ACCESS_KEY},
-             '-v','-P','sync',$tsv,'s3://perl-releases/versions_test.txt'])
+    cap_cmd(['s3cmd','-v','-P','push',$tsv,'s3://perl-releases/versions_test.txt'])
 }
 
 eval {
