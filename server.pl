@@ -175,7 +175,7 @@ sub fetch_version_list {
     print $fh $versions;
     close($fh);
 
-    cap_cmd(['s3cmd','-c',$FindBin::Bin.'/tmp/.s3cfg','-v','-P','put', $tsv,'s3://perl-releases/versions_test.txt'])
+    cap_cmd(['s3cmd','-c',$FindBin::Bin.'/tmp/.s3cfg','-v','-P','put', $tsv,'s3://perl-releases/versions.txt'])
 }
 
 eval {
