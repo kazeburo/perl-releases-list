@@ -24,6 +24,52 @@ my $tsv = $FindBin::Bin . '/tmp/htdocs/perl_versions.txt';
 mkdir $FindBin::Bin . '/tmp';
 mkdir $FindBin::Bin . '/tmp/htdocs';
 
+my $s3cfg = <<'EOF';
+[default]
+access_key = <AWS_ACCESS_KEY_ID>
+bucket_location = US
+cloudfront_host = cloudfront.amazonaws.com
+cloudfront_resource = /2010-07-15/distribution
+default_mime_type = binary/octet-stream
+delete_removed = False
+dry_run = False
+encoding = UTF-8
+encrypt = False
+follow_symlinks = False
+force = False
+get_continue = False
+gpg_command = None
+gpg_decrypt = %(gpg_command)s -d --verbose --no-use-agent --batch --yes --passphrase-fd %(passphrase_fd)s -o %(output_file)s %(input_file)s
+gpg_encrypt = %(gpg_command)s -c --verbose --no-use-agent --batch --yes --passphrase-fd %(passphrase_fd)s -o %(output_file)s %(input_file)s
+gpg_passphrase = 
+guess_mime_type = True
+host_base = s3.amazonaws.com
+host_bucket = %(bucket)s.s3.amazonaws.com
+human_readable_sizes = False
+list_md5 = False
+log_target_prefix = 
+preserve_attrs = True
+progress_meter = True
+proxy_host = 
+proxy_port = 0
+recursive = False
+recv_chunk = 4096
+reduced_redundancy = False
+secret_key = <AWS_SECRET_ACCESS_KEY>
+send_chunk = 4096
+simpledb_host = sdb.amazonaws.com
+skip_existing = False
+socket_timeout = 300
+urlencoding_mode = normal
+use_https = True
+verbosity = WARNING
+EOF
+
+$s3cfg =~ s!<([A-Z_]+?)>!$ENV{$1}!g;
+open (my $s3cfg_fh, '>', $FindBin::Bin . '/tmp/.s3cfg') or die "$!";
+print $s3cfg_fh $s3cfg;
+close($s3cfg_fh);
+
 my $req = <<'EOF';
 {
     "size": 1000,
@@ -129,7 +175,7 @@ sub fetch_version_list {
     print $fh $versions;
     close($fh);
 
-    cap_cmd(['s3cmd','-v','-P','put', $tsv,'s3://perl-releases/versions_test.txt'])
+    cap_cmd(['s3cmd','-c',$FindBin::Bin.'/tmp/.s3cfg','-v','-P','put', $tsv,'s3://perl-releases/versions_test.txt'])
 }
 
 eval {
