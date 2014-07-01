@@ -93,6 +93,7 @@ sub _by_version {
 }
 
 sub fetch_version_list {
+    warn "Try to update version list\n";
     my $agent = HTTP::Tiny->new(timeout=>20);
     my $res = $agent->request('GET', 'http://api.metacpan.org/v0/release/_search', { content => $req } );
     die "Failed to request api.metacpan.org status:$res->{status} reason:$res->{reason}\n" unless $res->{success};
@@ -128,7 +129,7 @@ sub fetch_version_list {
     print $fh $versions;
     close($fh);
 
-    cap_cmd(['s3cmd','-v','-P','push',$tsv,'s3://perl-releases/versions_test.txt'])
+    cap_cmd(['s3cmd','-v','-P','put', $tsv,'s3://perl-releases/versions_test.txt'])
 }
 
 eval {
