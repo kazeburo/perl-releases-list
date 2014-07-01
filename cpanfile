@@ -6,3 +6,5 @@ requires 'JSON';
 requires 'CPAN::DistnameInfo';
 requires 'Proclet';
 requires 'Plack';
+requires 'Starlet';
+requires 'HTTP::Parser::XS';
