@@ -201,8 +201,11 @@ my $app = builder {
     enable 'StackTrace';
     sub {
         my $env = shift;
-        open(my $fh, '<', $tsv) or die "$!";
-        return [200,['Content-Type'=>'text/plain'],$fh];
+        if ( $env->{PATH_INFO} eq '/' ) { 
+            open(my $fh, '<', $tsv) or die "$!";
+            return [200,['Content-Type'=>'text/plain'],$fh];
+        }
+        return [404,[],['not found']];
     }
 };
 
